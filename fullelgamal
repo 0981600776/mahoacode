@@ -1,10 +1,12 @@
 import math
 import random
 import base64
-from PyQt5.QtWidgets import QMessageBox
+from docx.shared import RGBColor
+from docx import Document
 from PyQt5.QtWidgets import QFileDialog
 from docx import Document
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 def ktra_snt(n):
     if n < 2:
@@ -265,8 +267,9 @@ class Ui_MainWindow(object):
             alpha = int(self.nhapalpha.text())
             a = int(self.nhapa.text())
 
-            #if p < 5000:
-                #QMessageBox.information(self, 'Lỗi', 'Vui lòng nhập P >= 5000!')
+            if p < 5000:
+                QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng nhập P > 5000")
+                return
             if not ktra_snt(p):
                 QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng nhập P là số nguyên tố")
                 return
@@ -284,9 +287,9 @@ class Ui_MainWindow(object):
     
     def randomkeyClicked(self):
         # Sinh ngẫu nhiên giá trị p
-        p = random.randint(5000, 10000)  # Sinh ngẫu nhiên p trong khoảng từ 5000 đến 10000
+        p = random.randint(5000, 20000)  # Sinh ngẫu nhiên p trong khoảng từ 5000 đến 10000
         while not ktra_snt(p):
-            p = random.randint(5000, 10000)
+            p = random.randint(5000, 20000)
 
         # Sinh ngẫu nhiên các giá trị alpha, a, k và beta
         alpha = random.randint(1, p - 1)  # Sinh giá trị alpha ngẫu nhiên từ 1 đến p - 1
@@ -319,7 +322,15 @@ class Ui_MainWindow(object):
         if not banro:
             QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Không có bản rõ để mã hóa")
             return
-
+        p_value = self.nhapp.text()
+        alpha_value = self.nhapalpha.text()
+        a_value = self.nhapa.text()
+        
+        if not p_value or not alpha_value or not a_value:
+            # Hiển thị thông báo yêu cầu nhập P
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng tạo khóa")
+            return
+        
         # Lấy giá trị p, alpha, a, k, beta từ các trường tương ứng
         p = int(self.nhapp.text())
         alpha = int(self.nhapalpha.text())
@@ -343,6 +354,7 @@ class Ui_MainWindow(object):
             # Ghi phần tử đầu tiên và thứ hai vào chuỗi bản mã hóa
             banmahoa += str(c1) + "," + str(c2) + " "
         banmahoa_base64 = base64.b64encode(banmahoa.encode()).decode()
+        #banmahoa_base64 = base64.b64encode(json.dumps(banmahoa).encode()).decode()
         self.banmamh.setPlainText(banmahoa_base64)
     def chuyenmhClicked(self):
         # Lấy chuỗi bản mã từ trường nhập liệu
@@ -363,6 +375,22 @@ class Ui_MainWindow(object):
         if not banmahoa_base64:
             QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Không có bản rõ để mã hóa")
             return
+        p_value = self.nhapp.text()
+        alpha_value = self.nhapalpha.text()
+        a_value = self.nhapa.text()
+        
+        if not p_value:
+            # Hiển thị thông báo yêu cầu nhập P
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng tạo khóa")
+            return
+        if not alpha_value:
+            # Hiển thị thông báo yêu cầu nhập alpha
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng tạo khóa")
+            return
+        if not a_value:
+            # Hiển thị thông báo yêu cầu nhập A
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng tạo khóa")
+            return
         # Lấy giá trị p, alpha, a, k, beta từ các trường tương ứng
         p = int(self.nhapp.text())
         alpha = int(self.nhapalpha.text())
@@ -375,7 +403,6 @@ class Ui_MainWindow(object):
         except:
             QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Không thể chuyển đổi bản mã hóa từ Base64.")
             return
-
         # Tách các cặp mã hóa từ chuỗi banmahoa
         pairs = banmahoa.strip().split(" ")
         banro_int = []
@@ -389,7 +416,7 @@ class Ui_MainWindow(object):
             banro_char = (c2 * s_inv) % p
             # Kiểm tra giá trị của banro_char
             if banro_char < 0 or banro_char > 255:
-                QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Giá trị bản rõ không hợp lệ.")
+                QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Giá trị khóa bản rõ không hợp lệ.")
                 return
             # Lưu giá trị bản rõ vào danh sách banro_int
             banro_int.append(banro_char)
@@ -401,39 +428,97 @@ class Ui_MainWindow(object):
         # Ghi chuỗi bản rõ vào trường hiển thị
         self.banrogm.setPlainText(banro)
 
+    
     def filemhClicked(self):
-    # Hiển thị hộp thoại để người dùng chọn file
+        # Hiển thị hộp thoại để người dùng chọn file
         file_path, _ = QFileDialog.getOpenFileName(MainWindow, "Chọn file", "", "Text Files (*.txt);;Word Files (*.docx)")
 
         if file_path:
+            # Xóa nội dung hiện tại trong trường banromh
+            self.banromh.clear()
+
             # Đọc nội dung từ file .txt hoặc .docx
             if file_path.endswith('.txt'):
                 with open(file_path, 'r', encoding='utf-8') as file:
                     file_content = file.read()
+                # Hiển thị nội dung đọc được trong trường banromh
+                self.banromh.setPlainText(file_content)
             elif file_path.endswith('.docx'):
                 doc = Document(file_path)
-                paragraphs = [p.text for p in doc.paragraphs]
-                file_content = '\n'.join(paragraphs)
+                file_content = ""
 
-            # Hiển thị nội dung đọc được trong trường banromh
-            self.banromh.setPlainText(file_content)
+                # Trích xuất nội dung từ các đoạn văn bản trong tài liệu
+                for paragraph in doc.paragraphs:
+                    runs = paragraph.runs
+                    for run in runs:
+                        text = run.text
+                        font = run.font
+                        if font.bold:
+                            text = "<b>" + text + "</b>"
+                        if font.italic:
+                            text = "<i>" + text + "</i>"
+                        if font.underline:
+                            text = "<u>" + text + "</u>"
+                        if font.color is not None and font.color.rgb is not None:
+                            color_code = "#{:02x}{:02x}{:02x}".format(font.color.rgb[0], font.color.rgb[1], font.color.rgb[2])
+                            text = '<span style="color:{}">{}</span>'.format(color_code, text)
+                        if font.size is not None:
+                            size = font.size.pt
+                            text = '<span style="font-size:{}pt">{}</span>'.format(size, text)
+                            file_content += text
+                        if font.name is not None:
+                            text = '<span style="font-family:{}">{}</span>'.format(font.name, text)
+                        file_content += text
+                    file_content += "<br>"
+
+                # Hiển thị nội dung đọc được trong trường banromh
+                self.banromh.setHtml(file_content)
 
     def filegmClicked(self):
         # Hiển thị hộp thoại để người dùng chọn file
         file_path, _ = QFileDialog.getOpenFileName(MainWindow, "Chọn file", "", "Text Files (*.txt);;Word Files (*.docx)")
 
         if file_path:
+            # Xóa nội dung hiện tại trong trường banmagm
+            self.banmagm.clear()
+
             # Đọc nội dung từ file .txt hoặc .docx
             if file_path.endswith('.txt'):
                 with open(file_path, 'r', encoding='utf-8') as file:
                     file_content = file.read()
+                # Hiển thị nội dung đọc được trong trường banmagm
+                self.banmagm.setPlainText(file_content)
             elif file_path.endswith('.docx'):
                 doc = Document(file_path)
-                paragraphs = [p.text for p in doc.paragraphs]
-                file_content = '\n'.join(paragraphs)
+                file_content = ""
 
-            # Hiển thị nội dung đọc được trong trường banmagm
-            self.banmagm.setPlainText(file_content)
+                # Trích xuất nội dung từ các đoạn văn bản trong tài liệu
+                for paragraph in doc.paragraphs:
+                    runs = paragraph.runs
+                    for run in runs:
+                        text = run.text
+                        font = run.font
+                        if font.bold:
+                            text = "<b>" + text + "</b>"
+                        if font.italic:
+                            text = "<i>" + text + "</i>"
+                        if font.underline:
+                            text = "<u>" + text + "</u>"
+                        if font.color is not None and font.color.rgb is not None:
+                            color_code = "#{:02x}{:02x}{:02x}".format(font.color.rgb[0], font.color.rgb[1], font.color.rgb[2])
+                            text = '<span style="color:{}">{}</span>'.format(color_code, text)
+                        if font.size is not None:
+                            size = font.size.pt
+                            text = '<span style="font-size:{}pt">{}</span>'.format(size, text)
+                            file_content += text
+                        if font.name is not None:
+                            text = '<span style="font-family:{}">{}</span>'.format(font.name, text)
+                        file_content += text
+                    file_content += "<br>"
+
+                # Hiển thị nội dung đọc được trong trường banmagm
+                self.banmagm.setHtml(file_content)
+
     def luumhClicked(self):
         # Lấy nội dung bản mã từ trường banmamh
         banmahoa = self.banmamh.toPlainText()
