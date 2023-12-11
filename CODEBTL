@@ -1,0 +1,659 @@
+import math
+import random
+import base64
+from docx.shared import RGBColor
+from docx.enum.text import WD_COLOR_INDEX
+from docx.oxml.ns import nsdecls
+from docx.oxml import parse_xml
+from docx.shared import Inches
+from docx import Document
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+def ktra_snt(n):
+    if n < 2:
+        return False
+    for i in range(2, int(math.sqrt(n)) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+def bpvn(coso, somu, chia):
+    if somu == 0:
+        return 1
+    if somu == 1:
+        return coso % chia
+    t = bpvn(coso, somu // 2, chia)
+    x = (t * t) % chia
+    if somu % 2 == 0:
+        return x
+    return ((coso % chia) * x) % chia
+
+def oclit(a,m):
+    m0 = m
+    s = 0
+    t = 1
+    if m == 1:
+        return 0
+    while(a > 1):
+        q = a // m
+        tam = m
+        m = a % m
+        a = tam
+        tam = s
+        s = t - q * s
+        t = tam
+    if t < 0:
+        t += m0
+    return t
+color_mapping = {
+    "FFFF00": "yellow",
+    "FF0000": "red",
+    # Thêm các giá trị mã màu tùy chỉnh khác (nếu có)
+}
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(800, 600)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
+        self.groupBox.setGeometry(QtCore.QRect(10, 40, 751, 421))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(12)
+        self.groupBox.setFont(font)
+        self.groupBox.setStyleSheet("background-color: rgb(170, 255, 255);")
+        self.groupBox.setObjectName("groupBox")
+        self.groupBox_2 = QtWidgets.QGroupBox(self.groupBox)
+        self.groupBox_2.setGeometry(QtCore.QRect(10, 50, 120, 341))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(10)
+        self.groupBox_2.setFont(font)
+        self.groupBox_2.setStyleSheet("background-color: rgb(170, 255, 127);")
+        self.groupBox_2.setObjectName("groupBox_2")
+        self.label = QtWidgets.QLabel(self.groupBox_2)
+        self.label.setGeometry(QtCore.QRect(20, 40, 21, 16))
+        self.label.setObjectName("label")
+        self.label_2 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_2.setGeometry(QtCore.QRect(10, 70, 41, 16))
+        self.label_2.setObjectName("label_2")
+        self.label_3 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_3.setGeometry(QtCore.QRect(20, 100, 21, 16))
+        self.label_3.setObjectName("label_3")
+        self.taokey = QtWidgets.QPushButton(self.groupBox_2)
+        self.taokey.setGeometry(QtCore.QRect(20, 130, 71, 23))
+        self.taokey.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.taokey.setObjectName("taokey")
+        self.label_4 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_4.setGeometry(QtCore.QRect(20, 170, 31, 16))
+        self.label_4.setObjectName("label_4")
+        self.label_5 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_5.setGeometry(QtCore.QRect(20, 200, 21, 16))
+        self.label_5.setObjectName("label_5")
+        self.nhapp = QtWidgets.QLineEdit(self.groupBox_2)
+        self.nhapp.setGeometry(QtCore.QRect(50, 40, 61, 20))
+        self.nhapp.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.nhapp.setObjectName("nhapp")
+        self.nhapalpha = QtWidgets.QLineEdit(self.groupBox_2)
+        self.nhapalpha.setGeometry(QtCore.QRect(50, 70, 61, 20))
+        self.nhapalpha.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.nhapalpha.setObjectName("nhapalpha")
+        self.nhapa = QtWidgets.QLineEdit(self.groupBox_2)
+        self.nhapa.setGeometry(QtCore.QRect(50, 100, 61, 20))
+        self.nhapa.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+"")
+        self.nhapa.setObjectName("nhapa")
+        self.nhapbeta = QtWidgets.QLineEdit(self.groupBox_2)
+        self.nhapbeta.setGeometry(QtCore.QRect(50, 170, 61, 20))
+        self.nhapbeta.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.nhapbeta.setObjectName("nhapbeta")
+        self.nhapk = QtWidgets.QLineEdit(self.groupBox_2)
+        self.nhapk.setGeometry(QtCore.QRect(50, 200, 61, 20))
+        self.nhapk.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.nhapk.setObjectName("nhapk")
+        self.randomkey = QtWidgets.QPushButton(self.groupBox_2)
+        self.randomkey.setGeometry(QtCore.QRect(20, 240, 81, 23))
+        self.randomkey.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.randomkey.setObjectName("randomkey")
+        self.xoa = QtWidgets.QPushButton(self.groupBox_2)
+        self.xoa.setGeometry(QtCore.QRect(20, 280, 81, 31))
+        self.xoa.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.xoa.setObjectName("xoa")
+        self.groupBox_3 = QtWidgets.QGroupBox(self.groupBox)
+        self.groupBox_3.setGeometry(QtCore.QRect(140, 50, 291, 341))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.groupBox_3.setFont(font)
+        self.groupBox_3.setStyleSheet("background-color: rgb(170, 255, 127);")
+        self.groupBox_3.setObjectName("groupBox_3")
+        self.label_6 = QtWidgets.QLabel(self.groupBox_3)
+        self.label_6.setGeometry(QtCore.QRect(10, 50, 41, 16))
+        self.label_6.setObjectName("label_6")
+        self.label_7 = QtWidgets.QLabel(self.groupBox_3)
+        self.label_7.setGeometry(QtCore.QRect(10, 190, 41, 16))
+        self.label_7.setObjectName("label_7")
+        self.banromh = QtWidgets.QTextEdit(self.groupBox_3)
+        self.banromh.setGeometry(QtCore.QRect(50, 50, 161, 81))
+        self.banromh.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.banromh.setObjectName("banromh")
+        self.banmamh = QtWidgets.QTextEdit(self.groupBox_3)
+        self.banmamh.setGeometry(QtCore.QRect(50, 190, 161, 81))
+        self.banmamh.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.banmamh.setObjectName("banmamh")
+        self.filemh = QtWidgets.QPushButton(self.groupBox_3)
+        self.filemh.setGeometry(QtCore.QRect(220, 50, 61, 23))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.filemh.setFont(font)
+        self.filemh.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.filemh.setObjectName("filemh")
+        self.mahoa = QtWidgets.QPushButton(self.groupBox_3)
+        self.mahoa.setGeometry(QtCore.QRect(90, 150, 75, 23))
+        self.mahoa.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.mahoa.setObjectName("mahoa")
+        self.chuyenmh = QtWidgets.QPushButton(self.groupBox_3)
+        self.chuyenmh.setGeometry(QtCore.QRect(220, 240, 61, 23))
+        self.chuyenmh.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.chuyenmh.setObjectName("chuyenmh")
+        self.luumh = QtWidgets.QPushButton(self.groupBox_3)
+        self.luumh.setGeometry(QtCore.QRect(220, 190, 61, 23))
+        self.luumh.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.luumh.setObjectName("luumh")
+        self.groupBox_4 = QtWidgets.QGroupBox(self.groupBox)
+        self.groupBox_4.setGeometry(QtCore.QRect(440, 50, 291, 341))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(10)
+        self.groupBox_4.setFont(font)
+        self.groupBox_4.setStyleSheet("background-color: rgb(170, 255, 127);")
+        self.groupBox_4.setObjectName("groupBox_4")
+        self.label_8 = QtWidgets.QLabel(self.groupBox_4)
+        self.label_8.setGeometry(QtCore.QRect(10, 50, 41, 16))
+        self.label_8.setObjectName("label_8")
+        self.label_9 = QtWidgets.QLabel(self.groupBox_4)
+        self.label_9.setGeometry(QtCore.QRect(10, 190, 41, 16))
+        self.label_9.setObjectName("label_9")
+        self.banmagm = QtWidgets.QTextEdit(self.groupBox_4)
+        self.banmagm.setGeometry(QtCore.QRect(50, 50, 161, 81))
+        self.banmagm.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.banmagm.setObjectName("banmagm")
+        self.filegm = QtWidgets.QPushButton(self.groupBox_4)
+        self.filegm.setGeometry(QtCore.QRect(220, 50, 61, 23))
+        self.filegm.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.filegm.setObjectName("filegm")
+        self.giaima = QtWidgets.QPushButton(self.groupBox_4)
+        self.giaima.setGeometry(QtCore.QRect(90, 150, 75, 23))
+        self.giaima.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.giaima.setObjectName("giaima")
+        self.banrogm = QtWidgets.QTextEdit(self.groupBox_4)
+        self.banrogm.setGeometry(QtCore.QRect(50, 190, 161, 81))
+        self.banrogm.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.banrogm.setObjectName("banrogm")
+        self.luugm = QtWidgets.QPushButton(self.groupBox_4)
+        self.luugm.setGeometry(QtCore.QRect(220, 190, 61, 23))
+        self.luugm.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.luugm.setObjectName("luugm")
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
+        self.menubar.setObjectName("menubar")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        # nút tạo khóa
+        self.taokey.clicked.connect(self.taokeyClicked)
+        # nút random key
+        self.randomkey.clicked.connect(self.randomkeyClicked)
+        # nút xóa
+        self.xoa.clicked.connect(self.xoaClicked)
+        # nút chọn file mã hóa
+        self.filemh.clicked.connect(self.filemhClicked)
+        # nút mã hóa
+        self.mahoa.clicked.connect(self.mahoaClicked)
+        # nut luu file ma hoa
+        self.luumh.clicked.connect(self.luumhClicked)
+        # nut chuyen
+        self.chuyenmh.clicked.connect(self.chuyenmhClicked)
+        # nut chon file giai ma
+        self.filegm.clicked.connect(self.filegmClicked)
+        # giai ma
+        self.giaima.clicked.connect(self.giaimaClicked)
+        # luu file giai ma
+        self.luugm.clicked.connect(self.luugmClicked)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.groupBox.setTitle(_translate("MainWindow", "ELGAMMAL"))
+        self.groupBox_2.setTitle(_translate("MainWindow", "TẠO KHÓA"))
+        self.label.setText(_translate("MainWindow", "P"))
+        self.label_2.setText(_translate("MainWindow", "Alpha"))
+        self.label_3.setText(_translate("MainWindow", "A"))
+        self.taokey.setText(_translate("MainWindow", "Tạo Key"))
+        self.label_4.setText(_translate("MainWindow", "Beta"))
+        self.label_5.setText(_translate("MainWindow", "K"))
+        self.randomkey.setText(_translate("MainWindow", "Random Key"))
+        self.xoa.setText(_translate("MainWindow", "Clear"))
+        self.groupBox_3.setTitle(_translate("MainWindow", "MÃ HÓA"))
+        self.label_6.setText(_translate("MainWindow", "Bản rõ"))
+        self.label_7.setText(_translate("MainWindow", "Bản mã"))
+        self.filemh.setText(_translate("MainWindow", "File"))
+        self.mahoa.setText(_translate("MainWindow", "Mã hóa"))
+        self.chuyenmh.setText(_translate("MainWindow", "Chuyển"))
+        self.luumh.setText(_translate("MainWindow", "Lưu"))
+        self.groupBox_4.setTitle(_translate("MainWindow", "GIẢI MÃ"))
+        self.label_8.setText(_translate("MainWindow", "Bản mã"))
+        self.label_9.setText(_translate("MainWindow", "Bản rõ"))
+        self.filegm.setText(_translate("MainWindow", "File"))
+        self.giaima.setText(_translate("MainWindow", "Giải mã"))
+        self.luugm.setText(_translate("MainWindow", "Lưu"))
+
+    def taokeyClicked(self):
+        p_value = self.nhapp.text()
+        alpha_value = self.nhapalpha.text()
+        a_value = self.nhapa.text()
+        
+        if not p_value:
+            # Hiển thị thông báo yêu cầu nhập P
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng nhập P")
+        elif not alpha_value:
+            # Hiển thị thông báo yêu cầu nhập alpha
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng nhập Alpha")
+        elif not a_value:
+            # Hiển thị thông báo yêu cầu nhập A
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng nhập A")
+        else:
+            p = int(self.nhapp.text())
+            alpha = int(self.nhapalpha.text())
+            a = int(self.nhapa.text())
+
+            if p < 5000:
+                QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng nhập P > 5000")
+                return
+            if not ktra_snt(p):
+                QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng nhập P là số nguyên tố")
+                return
+            elif alpha < 1 or alpha > p - 1:
+                QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Alpha nhập không hợp lệ")
+                return
+            elif a < 2 or a > p - 2:
+                QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "A nhập không hợp lệ")
+                return
+            else:
+                beta = bpvn(alpha, a, p)
+                self.nhapbeta.setText(str(beta))
+                k = random.randint(0, p - 2)
+                self.nhapk.setText(str(k))
+    
+    def randomkeyClicked(self):
+        # Sinh ngẫu nhiên giá trị p
+        p = random.randint(5000, 20000)
+        while not ktra_snt(p):
+            p = random.randint(5000, 20000)
+
+        # Sinh ngẫu nhiên các giá trị alpha, a, k và beta
+        alpha = random.randint(1, p - 1)
+        a = random.randint(2, p - 2)
+        k = random.randint(0, p - 1)
+        beta = pow(alpha, a, p)
+
+        # Hiển thị các giá trị p, alpha, a, k và beta trong giao diện
+        self.nhapp.setText(str(p))
+        self.nhapalpha.setText(str(alpha))
+        self.nhapa.setText(str(a))
+        self.nhapk.setText(str(k))
+        self.nhapbeta.setText(str(beta))
+    def xoaClicked(self):
+    # Xóa dữ liệu trong các trường nhập liệu
+        self.nhapp.clear()
+        self.nhapalpha.clear()
+        self.nhapa.clear()
+        self.nhapk.clear()
+        self.nhapbeta.clear()
+        self.banromh.clear()
+        self.banmamh.clear()
+        self.banmagm.clear()
+        self.banrogm.clear()
+    def mahoaClicked(self):
+        # Lấy chuỗi bản rõ từ trường nhập liệu
+        banro = self.banromh.toPlainText()
+
+        # Kiểm tra nếu không có bản rõ
+        if not banro:
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Không có bản rõ để mã hóa")
+            return
+        p_value = self.nhapp.text()
+        alpha_value = self.nhapalpha.text()
+        a_value = self.nhapa.text()
+        
+        if not p_value or not alpha_value or not a_value:
+            # Hiển thị thông báo yêu cầu nhập P
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng tạo khóa")
+            return
+        
+        # Lấy giá trị p, alpha, a, k, beta từ các trường tương ứng
+        p = int(self.nhapp.text())
+        alpha = int(self.nhapalpha.text())
+        a = int(self.nhapa.text())
+        k = int(self.nhapk.text())
+        beta = int(self.nhapbeta.text())
+
+        # Chuyển đổi chuỗi bản rõ thành các giá trị số nguyên UTF-8
+        banro_bytes = banro.encode("utf-8")
+        banro_int = [int(byte) for byte in banro_bytes]
+
+        # Mã hóa từng ký tự trong chuỗi bản rõ
+        banmahoa = ""
+        for banro_char in banro_int:
+            c1 = bpvn(alpha, k, p)
+            c2 = (banro_char * bpvn(beta, k, p)) % p
+            banmahoa += str(c1) + "," + str(c2) + " "
+        banmahoa_base64 = base64.b64encode(banmahoa.encode()).decode()
+        self.banmamh.setPlainText(banmahoa_base64)
+    def chuyenmhClicked(self):
+        # Lấy chuỗi bản mã từ trường nhập liệu
+        banmahoa = self.banmamh.toPlainText()
+
+        # Kiểm tra nếu không có bản mã
+        if not banmahoa:
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Không có bản mã để chuyển.")
+            return
+        # Ghi chuỗi bản mã đã chuyển đổi vào trường hiển thị
+        self.banmagm.setPlainText(banmahoa)
+    def giaimaClicked(self):
+
+        # Lấy chuỗi bản mã hóa từ trường nhập liệu
+        banmahoa_base64 = self.banmagm.toPlainText()
+        
+        # Kiểm tra nếu không có bản mã hóa
+        if not banmahoa_base64:
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Không có bản rõ để mã hóa")
+            return
+        p_value = self.nhapp.text()
+        alpha_value = self.nhapalpha.text()
+        a_value = self.nhapa.text()
+        
+        if not p_value:
+            # Hiển thị thông báo yêu cầu nhập P
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng tạo khóa")
+            return
+        if not alpha_value:
+            # Hiển thị thông báo yêu cầu nhập alpha
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng tạo khóa")
+            return
+        if not a_value:
+            # Hiển thị thông báo yêu cầu nhập A
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Vui lòng tạo khóa")
+            return
+        # Lấy giá trị p, alpha, a, k, beta từ các trường tương ứng
+        p = int(self.nhapp.text())
+        alpha = int(self.nhapalpha.text())
+        a = int(self.nhapa.text())
+        k = int(self.nhapk.text())
+        beta = int(self.nhapbeta.text())
+        # Chuyển đổi chuỗi bản mã hóa từ Base64 thành chuỗi banmahoa
+        try:
+            banmahoa = base64.b64decode(banmahoa_base64).decode()
+        except:
+            QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Bản mã hóa lỗi!")
+            return
+        pairs = banmahoa.strip().split(" ")
+        banro_int = []
+        for pair in pairs:
+            c1, c2 = pair.split(",")
+            c1 = int(c1)
+            c2 = int(c2)
+
+            # Tính phần tử thứ hai của cặp mã hóa (ciphertext)
+            s_inv = oclit(bpvn(c1, a, p), p)
+            banro_char = (c2 * s_inv) % p
+            # Kiểm tra giá trị của banro_char
+            if banro_char < 0 or banro_char > 255:
+                QtWidgets.QMessageBox.warning(MainWindow, "Lỗi", "Giá trị khóa bản rõ không hợp lệ.")
+                return
+            # Lưu giá trị bản rõ vào danh sách banro_int
+            banro_int.append(banro_char)
+        # Chuyển đổi danh sách giá trị số nguyên UTF-8 thành chuỗi banro
+        banro_bytes = bytes(banro_int)
+        banro = banro_bytes.decode()
+        #banro = banro_bytes.decode("utf-8")
+
+        # Ghi chuỗi bản rõ vào trường hiển thị
+        self.banrogm.setPlainText(banro)
+
+    
+    def filemhClicked(self):
+        # Hiển thị hộp thoại để người dùng chọn file
+        file_path, _ = QFileDialog.getOpenFileName(MainWindow, "Chọn file", "", "Text Files (*.txt);;Word Files (*.docx)")
+
+        if file_path:
+            # Xóa nội dung hiện tại trong trường banromh
+            self.banromh.clear()
+
+            # Đọc nội dung từ file .txt hoặc .docx
+            if file_path.endswith('.txt'):
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    file_content = file.read()
+                # Hiển thị nội dung đọc được trong trường banromh
+                self.banromh.setPlainText(file_content)
+            elif file_path.endswith('.docx'):
+                doc = Document(file_path)
+                file_content = ""
+
+                # Trích xuất nội dung từ các đoạn văn bản trong tài liệu
+                for paragraph in doc.paragraphs:
+                    runs = paragraph.runs
+                    for run in runs:
+                        text = run.text
+                        font = run.font
+                        if font.bold:
+                            text = "<b>" + text + "</b>"
+                        if font.italic:
+                            text = "<i>" + text + "</i>"
+                        if font.underline:
+                            text = "<u>" + text + "</u>"
+                        if font.color is not None and font.color.rgb is not None:
+                            color_code = "#{:02x}{:02x}{:02x}".format(font.color.rgb[0], font.color.rgb[1], font.color.rgb[2])
+                            text = '<span style="color:{}">{}</span>'.format(color_code, text)
+                        if font.size is not None:
+                            size = font.size.pt
+                            text = '<span style="font-size:{}pt">{}</span>'.format(size, text)
+                        if font.name is not None:
+                            text = '<span style="font-family:{}">{}</span>'.format(font.name, text)
+                        if font.highlight_color == WD_COLOR_INDEX.YELLOW:
+                            text = '<span style="background-color: yellow;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.GREEN:
+                            text = '<span style="background-color: green;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.BLACK:
+                            text = '<span style="background-color: black; color: white;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.PINK:
+                            text = '<span style="background-color: pink;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.RED:
+                            text = '<span style="background-color: red;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.BRIGHT_GREEN:
+                            text = '<span style="background-color: lime;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.TURQUOISE:
+                            text = '<span style="background-color: aqua;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.BLUE:
+                            text = '<span style="background-color: blue;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.DARK_BLUE:
+                            text = '<span style="background-color: navy;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.TEAL:
+                            text = '<span style="background-color: teal;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.VIOLET:
+                            text = '<span style="background-color: violet;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.DARK_RED:
+                            text = '<span style="background-color: darkred;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.DARK_YELLOW:
+                            text = '<span style="background-color: darkgoldenrod;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.GRAY_50:
+                            text = '<span style="background-color: gray;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.GRAY_25:
+                            text = '<span style="background-color: lightgray;">{}</span>'.format(text)
+                        else:
+                            text = text
+                        if run.font.subscript:
+                            text = '<sub>{}</sub>'.format(text)
+                        if run.font.superscript:
+                            text = '<sup>{}</sup>'.format(text)
+                        
+                        file_content += text
+                    file_content += "<br>"
+                # Xử lý các hình khối trong tài liệu
+                for shape in doc.inline_shapes:
+                    if shape.has_picture:
+                        # Đường dẫn tới file hình ảnh được nhúng trong hình khối
+                        image_path = shape._inline.graphic.graphicData.pic.blipFill.blip.embed
+
+                        # Tạo tên file mới cho hình ảnh
+                        new_image_path = "image{}.png".format(len(file_content))
+
+                        # Lưu hình ảnh từ file tài liệu thành file PNG mới
+                        doc.part.related_parts[image_path]._blob.save(new_image_path)
+
+                        # Thêm thẻ <img> với đường dẫn tới hình ảnh vào nội dung
+                        file_content += '<img src="{}">'.format(new_image_path)
+                    else:
+                        # Xử lý hình khối văn bản (textbox)
+                        shape_xml = shape._element.xml
+                        shape_xml = shape_xml.replace('a:pr', 'a:bodyPr')
+                        shape_xml = shape_xml.replace('a:p>', 'a:t>')
+                        shape_element = parse_xml(shape_xml)
+                        textbox_content = shape_element.xpath('.//a:t', namespaces=nsdecls)
+                        textbox_text = ''.join([t.text for t in textbox_content])
+                        file_content += textbox_text
+
+                # Hiển thị nội dung đọc được trong trường banromh
+                self.banromh.setHtml(file_content)
+
+    def filegmClicked(self):
+        # Hiển thị hộp thoại để người dùng chọn file
+        file_path, _ = QFileDialog.getOpenFileName(MainWindow, "Chọn file", "", "Text Files (*.txt);;Word Files (*.docx)")
+
+        if file_path:
+            # Xóa nội dung hiện tại trong trường banmagm
+            self.banmagm.clear()
+
+            # Đọc nội dung từ file .txt hoặc .docx
+            if file_path.endswith('.txt'):
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    file_content = file.read()
+                # Hiển thị nội dung đọc được trong trường banmagm
+                self.banmagm.setPlainText(file_content)
+            elif file_path.endswith('.docx'):
+                doc = Document(file_path)
+                file_content = ""
+
+                # Trích xuất nội dung từ các đoạn văn bản trong tài liệu
+                for paragraph in doc.paragraphs:
+                    runs = paragraph.runs
+                    for run in runs:
+                        text = run.text
+                        font = run.font
+                        if font.bold:
+                            text = "<b>" + text + "</b>"
+                        if font.italic:
+                            text = "<i>" + text + "</i>"
+                        if font.underline:
+                            text = "<u>" + text + "</u>"
+                        if font.strike:
+                            text = "<del>" + text + "</del>"
+                        if font.color is not None and font.color.rgb is not None:
+                            color_code = "#{:02x}{:02x}{:02x}".format(font.color.rgb[0], font.color.rgb[1], font.color.rgb[2])
+                            text = '<span style="color:{}">{}</span>'.format(color_code, text)
+                        if font.size is not None:
+                            size = font.size.pt
+                            text = '<span style="font-size:{}pt">{}</span>'.format(size, text)
+                        if font.name is not None:
+                            text = '<span style="font-family:{}">{}</span>'.format(font.name, text)
+                        if font.name is not None:
+                            text = '<span style="font-family:{}">{}</span>'.format(font.name, text)
+                        if font.highlight_color == WD_COLOR_INDEX.YELLOW:
+                            text = '<span style="background-color: yellow;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.GREEN:
+                            text = '<span style="background-color: green;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.BLACK:
+                            text = '<span style="background-color: black; color: white;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.PINK:
+                            text = '<span style="background-color: pink;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.RED:
+                            text = '<span style="background-color: red;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.BRIGHT_GREEN:
+                            text = '<span style="background-color: lime;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.TURQUOISE:
+                            text = '<span style="background-color: aqua;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.BLUE:
+                            text = '<span style="background-color: blue;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.DARK_BLUE:
+                            text = '<span style="background-color: navy;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.TEAL:
+                            text = '<span style="background-color: teal;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.VIOLET:
+                            text = '<span style="background-color: violet;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.DARK_RED:
+                            text = '<span style="background-color: darkred;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.DARK_YELLOW:
+                            text = '<span style="background-color: darkgoldenrod;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.GRAY_50:
+                            text = '<span style="background-color: gray;">{}</span>'.format(text)
+                        elif font.highlight_color == WD_COLOR_INDEX.GRAY_25:
+                            text = '<span style="background-color: lightgray;">{}</span>'.format(text)
+                        else:
+                            text = text
+                        if run.font.subscript:
+                            text = '<sub>{}</sub>'.format(text)
+                        if run.font.superscript:
+                            text = '<sup>{}</sup>'.format(text)
+                        file_content += text
+                    file_content += "<br>"
+
+                # Hiển thị nội dung đọc được trong trường banmagm
+                self.banmagm.setHtml(file_content)
+
+    def luumhClicked(self):
+        # Lấy nội dung bản mã từ trường banmamh
+        banmahoa = self.banmamh.toPlainText()
+
+        # Hiển thị hộp thoại để người dùng chọn vị trí và tên file
+        file_path, _ = QFileDialog.getSaveFileName(MainWindow, "Lưu tệp", "", "Text Files (*.txt);;Word Files (*.docx)")
+
+        if file_path:
+            # Lưu bản mã vào file .txt hoặc .docx
+            if file_path.endswith('.txt'):
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    file.write(banmahoa)
+            elif file_path.endswith('.docx'):
+                doc = Document()
+                doc.add_paragraph(banmahoa)
+                doc.save(file_path)
+    def luugmClicked(self):
+        # Lấy nội dung bản rõ từ trường banrogm
+        banro = self.banrogm.toPlainText()
+
+        # Hiển thị hộp thoại để người dùng chọn vị trí và tên file
+        file_path, _ = QFileDialog.getSaveFileName(MainWindow, "Lưu tệp", "", "Text Files (*.txt);;Word Files (*.docx)")
+
+        if file_path:
+            # Lưu bản rõ vào file .txt hoặc .docx
+            if file_path.endswith('.txt'):
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    file.write(banro)
+            elif file_path.endswith('.docx'):
+                doc = Document()
+                doc.add_paragraph(banro)
+                doc.save(file_path)
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
